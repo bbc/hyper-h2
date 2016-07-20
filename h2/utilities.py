@@ -243,8 +243,7 @@ def _reject_pseudo_header_fields(headers, hdr_validation_flags):
         yield header
 
 
-def _validate_host_authority_header(authority_header_val, host_header_val,
-                                    exception_class):
+def _validate_host_authority_header(authority_header_val, host_header_val):
     """
     Given the :authority and Host headers from a request block that isn't
     a trailer, check that:
@@ -260,14 +259,14 @@ def _validate_host_authority_header(authority_header_val, host_header_val,
     # It is an error for a request header block to contain neither
     # an :authority header nor a Host header.
     if not authority_present and not host_present:
-        raise exception_class(
+        raise ProtocolError(
             "Request header block must have an :authority of Host header."
         )
 
     # If we receive both headers, they should definitely match.
     if authority_present and host_present:
         if authority_header_val != host_header_val:
-            raise exception_class(
+            raise ProtocolError(
                 "Request header block must have matching :authority and "
                 "Host headers: %r / %r"
                 % (authority_header_val, host_header_val)
@@ -298,15 +297,15 @@ def _check_host_authority_header(headers, hdr_validation_flags):
     host_header_val = None
 
     for header in headers:
-        if header[0] == b':authority':
+        if header[0] in (b':authority', u':authority'):
             authority_header_val = header[1]
-        elif header[0] == b'host':
+        elif header[0] in (b'host', u'host'):
             host_header_val = header[1]
 
         yield header
 
     _validate_host_authority_header(
-        authority_header_val, host_header_val, ProtocolError)
+        authority_header_val, host_header_val)
 
 
 def _secure_headers(headers, hdr_validation_flags):
@@ -372,15 +371,15 @@ def _check_sent_host_authority_header(headers, hdr_validation_flags):
     host_header_val = None
 
     for header in headers:
-        if header[0] == b':authority':
+        if header[0] in (b':authority', u':authority'):
             authority_header_val = header[1]
-        elif header[0] == b'host':
+        elif header[0] in (b'host', u'host'):
             host_header_val = header[1]
 
         yield header
 
     _validate_host_authority_header(
-        authority_header_val, host_header_val, InvalidHeaderBlockError)
+        authority_header_val, host_header_val)
 
 
 def validate_sent_headers(headers, hdr_validation_flags):
